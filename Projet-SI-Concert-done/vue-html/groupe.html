@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <title>Groupe</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="groupe-vue.css" type="text/css">
+</head>
+
+<body>
+    <main id="app">
+
+        <div class="row flex-column align-items-center m-auto">
+
+            <div id="all-groupes" class="col-8">
+
+                <h3>Liste des Groupes enregistés :</h3>
+
+                <p>Il y a {{ nbGroupes }} groupe{{ (nbGroupes > 1 ? "s" : "") }}
+                    dans la base.</p>
+                <table id="liste-groupe" class="table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Nom</th>
+                            <th>Description</th>
+                            <th>Image</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(groupe, index) in groupes" :key="groupe.idGroupe">
+                            <td>{{ groupe.idGroupe }}</td>
+                            <td>{{ groupe.nomGroupe }}</td>
+                            <td>{{ groupe.description }}</td>
+                            <td><img alt="" width="35" :src="groupe.image"></td>
+                            <!-- <td>Concert set</td> -->
+                            <td class="text-center">
+                                <button class="btn btn-primary"
+                                    @click="this.editionGroupe = JSON.parse(JSON.stringify(groupe))">Editer</button>
+                                <button class="btn btn-danger ms-2" @click="supprimerGroupe(groupe)">Supprimer</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="form-groupe" class="col-8 mt-4">
+                <div v-if="this.editionGroupe == null" id="add-groupe">
+                    <h3>Ajouter un nouveau groupe :</h3>
+                    <form @submit.prevent="ajouterGroupe" class="form">
+                        <div class="form-group">
+                            <label for="nomGroupe">Nom :</label> <input type="text" id="nomGroupe"
+                                v-model="nouveauGroupe.nomGroupe" class="form-control" required>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="description">Description :</label>
+                            <textarea id="description" v-model="nouveauGroupe.description" class="form-control"
+                                required></textarea>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="imageGroupe">Lien image :</label> <input type="text" id="image"
+                                v-model="nouveauGroupe.image" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-success mt-2">Ajouter</button>
+                    </form>
+                </div>
+
+                <div v-else id="edit-groupe">
+                    <h3>Modifier le groupe :</h3>
+                    <form @submit.prevent="editerGroupe" class="form">
+                        <div class="form-group">
+                            <label for="nomGroupe">Nom :</label> <input type="text" id="nomGroupe"
+                                v-model="editionGroupe.nomGroupe" class="form-control" required>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="description">Description :</label>
+                            <textarea id="description" v-model="editionGroupe.description" class="form-control"
+                                required></textarea>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="imageGroupe">Lien image :</label> <input type="text" id="image"
+                                v-model="editionGroupe.image" class="form-control">
+                        </div>
+
+                        <button type="reset" class="btn btn-danger mt-2"
+                            @click="this.editionGroupe = null">Annuler</button>
+                        <button type="submit" class="btn btn-success mt-2 ms-2">Modifier</button>
+                    </form>
+
+                    <div class="form-group mt-4">
+                        <div v-if="this.editionGroupe.artistes.length == 0"
+                            class="d-flex justify-content-between align-items-center">
+                            <p class="fw-bold m-0">Aucun artiste dans le groupe</p>
+                            <button type="button" class="btn btn-link" @click="this.ajouterArtisteGroupe()">Ajouter
+                                Artiste</button>
+                        </div>
+                        <div v-else>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <p class="fw-bold m-0">Artiste dans le groupe :</p>
+                                <button type="button" class="btn btn-link" @click="this.ajouterArtisteGroupe()">Ajouter
+                                    Artiste</button>
+                            </div>
+                            <ul>
+                                <li class="artiste mb-2" v-for="artiste in editionGroupe.artistes"
+                                    :key="artiste.idArtiste">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-2">
+                                            Nom : {{ artiste.nomArtiste }}<br />Prenom : {{
+                                            artiste.prenomArtiste }}
+                                        </div>
+                                        <button class="btn btn-link"
+                                            @click="this.editerArtisteGroupe(artiste)">Editer</button>
+                                        <button class="btn btn-link"
+                                            @click="this.supprimerArtiste(artiste)">Supprimer</button>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const Groupes = {
+            data() {
+                return {
+                    groupes: [],
+                    nouveauGroupe: {
+                        nomGroupe: '',
+                        description: '',
+                        image: '',
+                    },
+                    editionGroupe: null,
+                    servletUrl: 'http://localhost:8090/DAO'
+                }
+            },
+            methods: {
+                supprimerGroupe(groupe) {
+                    if (confirm("Voulez-vous vraiment supprimer le groupe " + groupe.nomGroupe + " ?")) {
+                        if (groupe.idGroupe === this.editionGroupe?.idGroupe)
+                            this.editionGroupe = null;
+
+                        fetch(this.servletUrl + '/Groupe/' + groupe.idGroupe, {
+                            method: "DELETE"
+                        })
+                            .then((response) => response.json())
+                            .then((data) => {
+                                if (data.res) {
+                                    this.getGroupes();
+                                    alert("Succès : " + data.msg);
+                                }
+                                else { alert("Erreur : " + data.msg) }
+                            });
+                    }
+                },
+
+                ajouterGroupe() {
+                    fetch('http://localhost:8090/DAO/Groupe', {
+                        method: "POST",
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.nouveauGroupe)
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.res) {
+                                this.getGroupes();
+                                alert("Succès : " + data.msg);
+                            } else {
+                                alert("Erreur : " + data.msg);
+                            }
+                        });
+
+                    this.nouveauGroupe = { nomGroupe: '', description: '' };
+                },
+
+                editerGroupe() {
+                    fetch(this.servletUrl + '/Groupe', {
+                        method: "PUT",
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.editionGroupe)
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.res) {
+                                this.editionGroupe = null;
+                                this.getGroupes();
+                                alert("Succès : " + data.msg);
+                            } else {
+                                alert("Erreur : " + data.msg);
+                            }
+                        });
+                },
+
+                ajouterArtisteGroupe() {
+                    let nomArtiste = prompt("Nom de l'artiste :");
+                    let prenomArtiste = prompt("Prénom de l'artiste :");
+
+                    fetch(this.servletUrl + '/Artiste', {
+                        method: "POST",
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            idGroupe: this.editionGroupe.idGroupe,
+                            nomArtiste: nomArtiste,
+                            prenomArtiste: prenomArtiste,
+                        })
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.res) {
+                                this.getGroupes();
+                                alert("Succès : " + data.msg);
+                            } else {
+                                alert("Erreur : " + data.msg);
+                            }
+                        });
+                },
+
+                editerArtisteGroupe(artiste) {
+                    let nouveauNomArtiste = prompt("Nouveau nom de l'artiste : (laisser vide si inchangé)");
+                    let nouveauPrenomArtiste = prompt("Nouveau prénom de l'artiste : (laisser vide si inchangé)");
+
+                    if (nouveauNomArtiste != null && nouveauNomArtiste != "")
+                        artiste.nomArtiste = nouveauNomArtiste;
+
+                    if (nouveauPrenomArtiste != null && nouveauPrenomArtiste != "")
+                        artiste.prenomArtiste = nouveauPrenomArtiste;
+
+                    artiste.idGroupe = this.editionGroupe.idGroupe;
+
+                    fetch(this.servletUrl + '/Artiste', {
+                        method: "PUT",
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(artiste)
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.res) {
+                                this.getGroupes();
+                                alert("Succès : " + data.msg);
+                            } else {
+                                alert("Erreur : " + data.msg);
+                            }
+                        });
+                },
+
+                supprimerArtiste(artiste) {
+                    if (confirm("Voulez-vous vraiment supprimer l'artiste " + artiste.nomArtiste + " ?")) {
+                        fetch(this.servletUrl + '/Artiste/' + artiste.idArtiste, {
+                            method: "DELETE"
+                        })
+                            .then((response) => response.json())
+                            .then((data) => {
+                                if (data.res) {
+                                    this.getGroupes();
+                                    alert("Succès : " + data.msg);
+                                }
+                                else { alert("Erreur : " + data.msg) }
+                            });
+                    }
+                },
+
+                async getGroupes() {
+                    await fetch(this.servletUrl + '/Groupe', {
+                        method: "GET"
+                    })
+                        .then((response) => response.json())
+                        .then(async (data) => {
+                            this.groupes = data;
+
+                            await this.getArtistes();
+                        });
+                },
+
+                async getArtistes() {
+                    let groupes = this.groupes;
+                    for (let groupe of groupes) {
+                        groupe.artistes = [];
+
+                        let response = await fetch(this.servletUrl + '/Artiste?idGroupe=' + groupe.idGroupe, {
+                            method: "GET"
+                        });
+
+                        let data = await response.json();
+
+                        groupe.artistes = data;
+
+                        if (this.editionGroupe == null)
+                            continue;
+
+                        if (this.editionGroupe.idGroupe == groupe.idGroupe) {
+                            this.editionGroupe = groupe;
+                        }
+                    }
+
+                    this.groupes = groupes;
+                }
+
+            },
+            created() {
+                this.getGroupes();
+            },
+            computed: {
+                nbGroupes() {
+                    return this.groupes.length
+                }
+            }
+        }
+        const app = Vue.createApp(Groupes).mount('#app')
+    </script>
+</body>
+
+</html>
